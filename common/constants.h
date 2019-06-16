@@ -1,0 +1,6 @@
+#define TILE_SIZE 2.f
+#define CHUNK_WIDTH_IN_TILES 32
+#define CHUNK_HEIGHT_IN_TILES 32
+#define ART_WIDTH   256
+#define ART_HEIGHT  256
+#define MAX_PROJECTILES 1024

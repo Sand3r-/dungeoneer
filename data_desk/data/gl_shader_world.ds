@@ -1,0 +1,111 @@
+@Output("color", 0)
+shader_name :: "World";
+
+@Vertex
+vert : *char = """
+
+out vec2 frag_uv;
+
+void main()
+{
+    vec4 vertices[] = vec4[](vec4(0, 0, 0, 1),
+                             vec4(0, 1, 0, 1),
+                             vec4(1, 0, 0, 1),
+                             vec4(1, 1, 0, 1));
+    frag_uv = vertices[gl_VertexID].xy;
+    gl_Position = (vertices[gl_VertexID] * 2 - 1);
+}
+""";
+
+@Fragment
+frag : *char = """
+
+in vec2 frag_uv;
+out vec4 color;
+uniform mat4 inverse_view_projection;
+uniform mat4 shadow_view_projection;
+uniform sampler2D albedo_texture;
+uniform sampler2D normal_texture;
+uniform sampler2D depth_texture;
+uniform sampler2DShadow shadow_map_texture;
+
+struct Light
+{
+    vec3 position;
+    vec3 color;
+    float radius;
+    float intensity;
+};
+uniform Light lights[16];
+uniform int light_count;
+
+void main()
+{
+    vec4 albedo = texture(albedo_texture, frag_uv);
+    vec4 normal = texture(normal_texture, frag_uv);
+    float depth = texture(depth_texture, frag_uv).r * 2 - 1;
+    
+    vec4 world_space_position;
+    {
+        vec4 camera_clip_space = vec4(frag_uv*2 - 1, depth, 1);
+        vec4 world_space = inverse_view_projection * camera_clip_space + vec4(normal.xyz, 0)*0.02;
+        world_space /= world_space.w;
+        world_space_position = world_space;
+    }
+    
+    float world_space_y_modifier = 1;
+    {
+        world_space_y_modifier = 1 - clamp(world_space_position.y, -15, 0) / -15;
+    }
+    
+    float depth_modifier = 1;
+    {
+    }
+    
+    vec3 point_light_modifier = vec3(0.1);
+    {
+        for(int i = 0; i < light_count; ++i)
+        {
+            vec3 fragment_to_light = lights[i].position - world_space_position.xyz;
+            float distance_squared = dot(fragment_to_light, fragment_to_light);
+            float radius_squared = lights[i].radius * lights[i].radius;
+            if(distance_squared < radius_squared)
+            {
+                float factor = clamp(1 - distance_squared/radius_squared, 0, 1);
+                factor *= (dot(normal.xyz, normalize(fragment_to_light)) + 1.f) / 2.f;
+                factor *= lights[i].intensity;
+                point_light_modifier += factor*lights[i].color;
+            }
+        }
+    }
+    
+    float shadow_modifier = 1;
+    {
+        vec4 shadow_clip_space = shadow_view_projection * world_space_position;
+        shadow_clip_space /= shadow_clip_space.w;
+        
+        float actual_depth = (shadow_clip_space.z+1)/2;
+        vec3 shadow_sample_pos = vec3((shadow_clip_space.xy + 1)/2, actual_depth);
+        float shadow_sample = (textureOffset(shadow_map_texture, shadow_sample_pos, ivec2(0, 0)) +
+                               textureOffset(shadow_map_texture, shadow_sample_pos, ivec2(-1, +0)) +
+                               textureOffset(shadow_map_texture, shadow_sample_pos, ivec2(+1, +0)) +
+                               textureOffset(shadow_map_texture, shadow_sample_pos, ivec2(+0, -1)) +
+                               textureOffset(shadow_map_texture, shadow_sample_pos, ivec2(+0, +1))) /
+            5.0;
+        shadow_modifier = shadow_sample/2 + 0.5;
+    }
+    
+    float diffuse_modifier = 1;
+    {
+        vec3 light_vector = normalize(vec3(1, 1, 1));
+        diffuse_modifier = (1+dot(normal.xyz, light_vector))/2;
+    }
+    
+    color = albedo;
+    color.rgb *= (point_light_modifier *
+                  shadow_modifier *
+                  diffuse_modifier *
+                  world_space_y_modifier *
+                  depth_modifier);
+}
+""";

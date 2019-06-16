@@ -1,0 +1,213 @@
+struct EntityID
+{
+    type : u16;
+    instance_id : u16;
+}
+
+struct EntityIndex
+{
+    type : u16;
+    index : u16;
+}
+
+@Component
+struct SphereComponent
+{
+    position : v3;
+    radius : f32;
+    @Zero hit_velocity : v3;
+    @DoNotSave @Zero force : v3;
+    @DoNotSave @Zero velocity : v3;
+}
+
+@Component
+struct StaticFloatComponent
+{
+    position : v3;
+    @Zero float_sin_pos : f32;
+}
+
+@Component
+struct SpriteComponent
+{
+    position : v3;
+    scale : f32;
+    texture : *Texture;
+    source : v4;
+    flags : i32;
+    tint : v4;
+    @Zero bob_sin_pos : f32;
+    @Zero bob_magnitude : f32;
+}
+
+enum
+{
+    ATTACK_TYPE_melee,
+    ATTACK_TYPE_projectile_fire,
+}
+
+enum
+{
+    ATTACK_STAGE_idle,
+    ATTACK_STAGE_windup,
+    ATTACK_STAGE_hot,
+    ATTACK_STAGE_cooldown,
+}
+
+@Component
+struct AttackComponent
+{
+    type : i32;
+    @Zero position : v3;
+    @Zero hit_sphere_position : v3;
+    @Zero hit_sphere_relative_position : v3;
+    @Zero hit_sphere_max_radius : f32;
+    @Zero hit_sphere_radius : f32;
+    @Zero target_position : v3;
+    @Zero attack_time : f32;
+    parent_id : EntityID;
+    @Zero active : b32;
+}
+
+@Component
+struct WeaponComponent
+{
+    texture : *Texture;
+    source : v4;
+    @Zero attack_transition : f32;
+    @Zero attack_angle : f32;
+    @Zero position : v3;
+    @Zero bob_sin_pos : f32;
+    @Zero bob_magnitude : f32;
+}
+
+enum
+{
+    ENEMY_AI_TYPE_melee,
+    ENEMY_AI_TYPE_ranged,
+}
+
+enum
+{
+    ENEMY_AI_STATE_calm,
+    ENEMY_AI_STATE_attacking,
+}
+
+@Component
+struct EnemyAIComponent
+{
+    type : i32;
+    @Zero state : i32;
+    @Zero position: v3;
+    @Zero movement : v3;
+    @Zero movement_time : f32;
+    @Zero time_to_movement : f32;
+    @Zero player_close : b32;
+}
+
+@Component
+struct HealthComponent
+{
+    position : v3;
+    radius : f32;
+    health : f32;
+    parent_id : EntityID;
+    @Zero hurt_transition : f32;
+}
+
+@Entity(64)
+struct Collectible
+{
+    @Default("global_item_type_data+0")
+        item : *ItemType;
+    @Update("StaticFloatComponentInit(spawn_position)")
+        static_float : StaticFloatComponent;
+    @Update("SpriteComponentInit(spawn_position, 1.f, &app->art, item->source, 0, v4u(1))"),
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, item->source, 0, v4u(1))")
+        sprite : SpriteComponent;
+}
+
+@Entity(64)
+struct TreasureChest
+{
+    @Default("global_item_type_data+0")
+        item : *ItemType;
+    @Update("SphereComponentInit(spawn_position, 1.f)")
+        sphere : SphereComponent;
+    @Update("SpriteComponentInit(spawn_position, 1.f, &app->art,  v4(224, 176, 16, 16), 0, v4u(1))"),
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(224, 176, 16, 16), 0, v4u(1))")
+        sprite : SpriteComponent;
+}
+
+@Entity(64)
+struct Torch
+{
+    @Update("SphereComponentInit(spawn_position, 1.f)")
+        sphere : SphereComponent;
+    @Update("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(112, 160, 16, 16), 0, v4u(1))"),
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(112, 160, 16, 16), 0, v4u(1))")
+        sprite : SpriteComponent;
+}
+
+@Entity(64)
+struct Goblin
+{
+    @Update("SphereComponentInit(spawn_position, 1.f)")
+        sphere : SphereComponent;
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(32, 160, 16, 16), 0, v4u(1))")
+        sprite : SpriteComponent;
+    @Update("EnemyAIComponentInit(ENEMY_AI_TYPE_melee)")
+        enemy_ai : EnemyAIComponent;
+    @Update("HealthComponentInit(spawn_position, 1.f, 1.f, id)")
+        health : HealthComponent;
+    @Update("AttackComponentInit(ATTACK_TYPE_melee, id)")
+        attack : AttackComponent;
+    @Update("WeaponComponentInitFromItemType(global_item_type_data + ITEM_TYPE_dagger)")
+        weapon : WeaponComponent;
+}
+
+@Entity(64)
+struct DarkWizard
+{
+    @Update("SphereComponentInit(spawn_position, 1.f)")
+        sphere : SphereComponent;
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(80, 176, 16, 16), 0, v4u(1))")
+        sprite : SpriteComponent;
+    @Update("EnemyAIComponentInit(ENEMY_AI_TYPE_ranged)")
+        enemy_ai : EnemyAIComponent;
+    @Update("HealthComponentInit(spawn_position, 1.f, 1.f, id)")
+        health : HealthComponent;
+    @Update("AttackComponentInit(ATTACK_TYPE_projectile_fire, id)")
+        attack : AttackComponent;
+}
+
+@Entity(64)
+struct Knight
+{
+    @Update("SphereComponentInit(spawn_position, 1.f)")
+        sphere : SphereComponent;
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(192, 224, 16, 32), 0, v4u(1))")
+        sprite : SpriteComponent;
+    @Update("EnemyAIComponentInit(ENEMY_AI_TYPE_melee)")
+        enemy_ai : EnemyAIComponent;
+    @Update("HealthComponentInit(spawn_position, 1.f, 1.f, id)")
+        health : HealthComponent;
+    @Update("AttackComponentInit(ATTACK_TYPE_melee, id)")
+        attack : AttackComponent;
+    @Update("WeaponComponentInitFromItemType(global_item_type_data+ITEM_TYPE_rusty_steel_sword)")
+        weapon : WeaponComponent;
+}
+
+@Entity(64)
+struct Crate
+{
+    @Default("global_item_type_data+0")
+        item : *ItemType;
+    @Update("SphereComponentInit(spawn_position, 1.f)")
+        sphere : SphereComponent;
+    @Update("SpriteComponentInit(spawn_position, 1.f, &app->art,  v4(80, 112, 16, 16), 0, v4u(1))"),
+    @Default("SpriteComponentInit(spawn_position, 1.f, &app->art, v4(80, 112, 16, 16), 0, v4u(1))")
+        sprite : SpriteComponent;
+    @Update("HealthComponentInit(spawn_position, 1.f, 1.f, id)")
+        health : HealthComponent;
+}

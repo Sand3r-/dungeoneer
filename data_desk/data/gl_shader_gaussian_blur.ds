@@ -1,0 +1,64 @@
+@Input("vert_position", 0)
+@Output("color", 0)
+shader_name :: "Gaussian Blur";
+
+@Vertex
+vert : *char = """
+out vec2 frag_uv;
+uniform vec4 destination;
+
+void main()
+{
+    vec4 vertices[] = vec4[](vec4(0, 0, 0, 1),
+                             vec4(0, 1, 0, 1),
+                             vec4(1, 0, 0, 1),
+                             vec4(1, 1, 0, 1));
+    frag_uv = vertices[gl_VertexID].xy;
+    gl_Position = vertices[gl_VertexID] * 2 - 1;
+    frag_uv.y = 1 - frag_uv.y;
+}
+
+""";
+
+@Fragment
+frag : *char = """
+in vec2 frag_uv;
+out vec4 color;
+uniform sampler2D tex;
+uniform vec2 tex_resolution;
+uniform int radius;
+uniform vec4 kernel[32];
+uniform int vertical;
+uniform vec4 clip;
+
+void main()
+{
+    color = vec4(0, 0, 0, 0);
+    
+    if(gl_FragCoord.x >= clip.x && gl_FragCoord.x <= clip.x + clip.z &&
+       gl_FragCoord.y >= clip.y && gl_FragCoord.y <= clip.y + clip.w)
+    {
+        
+        int first_kernel_index = (16 - radius/4);
+        
+        for(int i = 0; i < 2*radius/4; ++i)
+        {
+            if(vertical != 0)
+            {
+                color += texture(tex, frag_uv + vec2(0, -radius + i*4 + 0) / tex_resolution) * kernel[first_kernel_index + i].x;
+                color += texture(tex, frag_uv + vec2(0, -radius + i*4 + 1) / tex_resolution) * kernel[first_kernel_index + i].y;
+                color += texture(tex, frag_uv + vec2(0, -radius + i*4 + 2) / tex_resolution) * kernel[first_kernel_index + i].z;
+                color += texture(tex, frag_uv + vec2(0, -radius + i*4 + 3) / tex_resolution) * kernel[first_kernel_index + i].w;
+            }
+            else
+            {
+                color += texture(tex, frag_uv + vec2(-radius + i*4 + 0, 0) / tex_resolution) * kernel[first_kernel_index + i].x;
+                color += texture(tex, frag_uv + vec2(-radius + i*4 + 1, 0) / tex_resolution) * kernel[first_kernel_index + i].y;
+                color += texture(tex, frag_uv + vec2(-radius + i*4 + 2, 0) / tex_resolution) * kernel[first_kernel_index + i].z;
+                color += texture(tex, frag_uv + vec2(-radius + i*4 + 3, 0) / tex_resolution) * kernel[first_kernel_index + i].w;
+            }
+        }
+    }
+}
+
+""";

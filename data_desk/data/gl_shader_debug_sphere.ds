@@ -1,0 +1,38 @@
+@Input("vert_position",      0)
+@Input("vert_color",         1)
+@Input("vert_sphere",        2)
+@Output("color", 0)
+shader_name :: "Debug Sphere";
+
+@Vertex
+vert : *char = """
+
+in vec3 vert_position;
+in vec4 vert_color;
+in vec4 vert_sphere;
+out vec4 frag_color;
+
+uniform mat4 view_projection;
+
+void main()
+{
+    vec3 position = vert_position;
+    vec4 color = vert_color;
+    vec4 sphere = vert_sphere;
+    vec4 world_space = vec4(sphere.xyz + position*sphere.w, 1);
+    vec4 clip_space = view_projection * world_space;
+    gl_Position = clip_space;
+}
+""";
+
+@Fragment
+frag : *char = """
+
+in vec4 frag_color;
+out vec4 color;
+
+void main()
+{
+    color = frag_color;
+}
+""";

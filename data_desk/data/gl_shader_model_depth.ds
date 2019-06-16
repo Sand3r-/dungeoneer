@@ -1,0 +1,30 @@
+@Input("vert_position", 0)
+@Input("vert_uv",       1)
+@Input("vert_normal",   2)
+shader_name :: "Model (Depth Only)";
+
+@Vertex
+vert : *char = """
+
+in vec3 vert_position;
+in vec2 vert_uv;
+in vec3 vert_normal;
+uniform mat4 model;
+uniform mat4 view_projection;
+
+void main()
+{
+    vec3 position = vert_position;
+    vec2 uv = vert_uv;
+    vec3 normal = vert_normal;
+    vec4 world_space = vec4(position, 1);
+    vec4 clip_space = view_projection * model * world_space;
+    gl_Position = clip_space;
+}
+""";
+
+@Fragment
+frag : *char = """
+void main()
+{}
+""";

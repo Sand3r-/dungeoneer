@@ -1,0 +1,11 @@
+struct OpenGLShaderInput
+{
+    index : int;
+    name : *char;
+}
+
+struct OpenGLShaderOutput
+{
+    index : int;
+    name : *char;
+}

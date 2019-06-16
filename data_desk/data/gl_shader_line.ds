@@ -1,0 +1,36 @@
+@Input("vert_1", 0)
+@Input("vert_2", 1)
+@Input("vert_color_data", 2)
+@Output("color", 0)
+shader_name :: "Line Batch";
+
+@Vertex
+vert : *char = """
+
+in vec3 vert_1;
+in vec3 vert_2;
+in vec4 vert_color;
+out vec4 frag_color_data;
+uniform mat4 view_projection;
+
+void main()
+{
+    vec3 vertices[] = vec3[](vert_1, vert_2);
+    frag_color_data = vert_color;
+    
+    vec4 world_space = vec4(vertices[gl_VertexID], 1);
+    vec4 clip_space = view_projection * world_space;
+    gl_Position = clip_space;
+    
+}
+""";
+
+@Fragment
+frag : *char = """
+in vec4 frag_color_data;
+out vec4 color;
+void main()
+{
+    color = frag_color_data;
+}
+""";

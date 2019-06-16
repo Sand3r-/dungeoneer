@@ -7,6 +7,7 @@ enum PlayerState
 {
     PLAYER_STATE_free,
     PLAYER_STATE_get_item,
+    PLAYER_STATE_dead,
     PLAYER_STATE_MAX
 };
 
@@ -24,6 +25,7 @@ struct Player
     ItemType *get_item_item;
     f32 get_item_wait_time;
     f32 attack_velocity_boost;
+    f32 inventory_view_transition;
 };
 
 internal void

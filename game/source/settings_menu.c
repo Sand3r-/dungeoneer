@@ -4,15 +4,18 @@ SettingsMenuUpdate(SettingsMenu *settings_menu)
 {
     b32 keep_open = 1;
     
+    v2 widget_size = { 400, 50 };
+    
     switch(settings_menu->state)
     {
         
         case SETTINGS_MENU_main:
         {
             
-            UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/2 - 6*25), v2(200, 50));
+            UIPushCenteredColumn(&app->ui, widget_size, 6);
             {
                 UITitle(&app->ui, "SETTINGS");
+                UIDivider(&app->ui);
                 
                 if(UIButton(&app->ui, "Controls"))
                 {
@@ -50,9 +53,10 @@ SettingsMenuUpdate(SettingsMenu *settings_menu)
         case SETTINGS_MENU_controls:
         {
             
-            UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/2 - 6*25), v2(200, 50));
+            UIPushCenteredColumn(&app->ui, widget_size, 2);
             {
                 UITitle(&app->ui, "CONTROLS");
+                UIDivider(&app->ui);
                 
                 UIDivider(&app->ui);
                 
@@ -70,9 +74,10 @@ SettingsMenuUpdate(SettingsMenu *settings_menu)
         case SETTINGS_MENU_audio:
         {
             
-            UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/2 - 6*25), v2(200, 50));
+            UIPushCenteredColumn(&app->ui, widget_size, 2 + AUDIO_MAX);
             {
                 UITitle(&app->ui, "AUDIO");
+                UIDivider(&app->ui);
                 
                 for(u32 i = 0; i < AUDIO_MAX; ++i)
                 {
@@ -95,9 +100,10 @@ SettingsMenuUpdate(SettingsMenu *settings_menu)
         case SETTINGS_MENU_graphics:
         {
             
-            UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/2 - 6*25), v2(200, 50));
+            UIPushCenteredColumn(&app->ui, widget_size, 3);
             {
                 UITitle(&app->ui, "GRAPHICS");
+                UIDivider(&app->ui);
                 
                 app->anti_aliasing = UIToggler(&app->ui, "Anti-Aliasing", app->anti_aliasing);
                 app->shadows = UIToggler(&app->ui, "Shadows", app->shadows);
@@ -118,9 +124,10 @@ SettingsMenuUpdate(SettingsMenu *settings_menu)
         case SETTINGS_MENU_display:
         {
             
-            UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/2 - 6*25), v2(200, 50));
+            UIPushCenteredColumn(&app->ui, widget_size, 5);
             {
                 UITitle(&app->ui, "DISPLAY");
+                UIDivider(&app->ui);
                 
                 platform->fullscreen = UIToggler(&app->ui, "Fullscreen", platform->fullscreen);
                 platform->vsync = UIToggler(&app->ui, "Vertical-Sync", platform->vsync);

@@ -39,6 +39,7 @@
 #include "component.c"
 #include "state_title.c"
 #include "state_game.c"
+#include "state_game_over.c"
 #include "state.c"
 #include "particle.c"
 #include "player.c"
@@ -71,7 +72,7 @@ Update(Platform *platform_)
         
         SeedRandomNumberGenerator();
         
-        platform->target_frames_per_second = 240.f;
+        platform->target_frames_per_second = 60.f;
         AudioInit(&app->audio);
         RendererInit(&app->renderer);
         UIInit(&app->ui);
@@ -86,7 +87,7 @@ Update(Platform *platform_)
         app->open_1 = SoundLoad("data/sound/open_1");
         app->music_1 = SoundLoad("data/sound/music_1");
         
-        app->state_type = STATE_title;
+        app->state_type = STATE_game;
         app->next_state_type = STATE_invalid;
         app->state_change_transition = 1.f;
         StateInit(app->state_type, &app->state_arena);

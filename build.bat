@@ -46,7 +46,7 @@ pushd data_desk
 set files= 
 for %%i in (data\*) do ( call set "files=%%files%% %%i" )
 echo --- Running Data Desk pass and generating code.
-data_desk --custom build\dungeoneer_data_desk.dll %files%
+rem start /b /wait "" "data_desk.exe" --custom build\dungeoneer_data_desk.dll %files%
 popd
 
 

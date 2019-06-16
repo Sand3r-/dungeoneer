@@ -28,9 +28,10 @@ TitleStateUpdate(TitleState *state)
     }
     else
     {
-        UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/3), v2(200, 50));
+        UIPushCenteredColumn(&app->ui, v2(400, 50), 5);
         {
             UITitle(&app->ui, "DUNGEONEER");
+            UIDivider(&app->ui);
             
             if(UIButton(&app->ui, "Play"))
             {

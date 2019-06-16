@@ -79,9 +79,10 @@ GameStateUpdate(GameState *state)
         }
         else
         {
-            UIPushColumn(&app->ui, v2(app->render_w/2 - 100, app->render_h/3), v2(200, 50));
+            UIPushCenteredColumn(&app->ui, v2(400, 50), 5);
             {
                 UITitle(&app->ui, "PAUSED");
+                UIDivider(&app->ui);
                 
                 if(UIButton(&app->ui, "Resume"))
                 {
@@ -230,6 +231,16 @@ GameStateUpdate(GameState *state)
                         }
                     }
                 }
+            }
+        }
+        
+        // NOTE(rjf): Check player health for game overs.
+        {
+            Player *player = &state->player;
+            if(player->health.health <= 0.f)
+            {
+                player->state = PLAYER_STATE_dead;
+                next_state = STATE_game_over;
             }
         }
     }

@@ -1617,6 +1617,19 @@ RendererPushText(Renderer *renderer, Font *font, i32 flags, v4 color, v3 positio
 {
     f32 width = 0.f;
     
+    if(flags & RENDERER_TEXT_ALIGN_CENTER_X)
+    {
+        f32 text_width = FontGetTextWidth(font, text) * scale;
+        if(flags & RENDERER_2D)
+        {
+        }
+        else
+        {
+            text_width /= 50.f;
+        }
+        position.x -= text_width/2.f;
+    }
+    
     if(font && FontIsLoaded(font))
     {
         for(u32 i = 0; text[i]; ++i)
@@ -1634,8 +1647,8 @@ RendererPushText(Renderer *renderer, Font *font, i32 flags, v4 color, v3 positio
                 
                 if(flags & RENDERER_2D)
                 {
-                    source.y = source.height - source.y;
-                    source.height *= -1;
+                    // source.y += source.height;
+                    // source.height *= -1;
                 }
                 
                 v2 size = {
@@ -1644,8 +1657,8 @@ RendererPushText(Renderer *renderer, Font *font, i32 flags, v4 color, v3 positio
                 };
                 
                 v2 offset = {
-                    0, // font->char_x_offset[character - 32] * scale/2,
-                    0, // font->char_y_offset[character - 32] * scale/2,
+                    font->char_x_offset[character - 32] * scale,
+                    font->char_y_offset[character - 32] * scale,
                 };
                 
                 f32 advance = scale * font->char_x_advance[character - 32];
@@ -1667,6 +1680,19 @@ RendererPushText(Renderer *renderer, Font *font, i32 flags, v4 color, v3 positio
                 v3 p2 = { position.x+0.f*size.x+offset.x, position.y+0.f*size.y+offset.y, position.z+0.f, };
                 v3 p3 = { position.x+1.f*size.x+offset.x, position.y+1.f*size.y+offset.y, position.z+0.f, };
                 v3 p4 = { position.x+1.f*size.x+offset.x, position.y+0.f*size.y+offset.y, position.z+0.f, };
+                
+                if(flags & RENDERER_2D)
+                {
+                    p1.y -= 1.f*size.y;
+                    p2.y += 1.f*size.y;
+                    p3.y -= 1.f*size.y;
+                    p4.y += 1.f*size.y;
+                    p1.y -= 20.f;
+                    p2.y -= 20.f;
+                    p3.y -= 20.f;
+                    p4.y -= 20.f;
+                }
+                
                 
                 RendererPushTextCharacter(renderer, font, flags, color, p1, p2, p3, p4,
                                           boldness, softness, character);

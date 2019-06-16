@@ -17,19 +17,36 @@ internal b32
 PlayerGetItem(Player *player, ItemType *item)
 {
     b32 result = 0;
-    for(u32 i = 0; i < ArrayCount(player->inventory); ++i)
+    if(player->state == PLAYER_STATE_free)
     {
-        if(player->inventory[i] == 0)
+        for(u32 i = 0; i < ArrayCount(player->inventory); ++i)
         {
-            result = 1;
-            player->inventory[i] = item;
-            player->state = PLAYER_STATE_get_item;
-            player->get_item_wait_time = 2.f;
-            player->get_item_item = item;
-            break;
+            if(player->inventory[i] == 0)
+            {
+                result = 1;
+                player->inventory[i] = item;
+                player->state = PLAYER_STATE_get_item;
+                player->get_item_wait_time = 2.f;
+                player->get_item_item = item;
+                break;
+            }
         }
     }
     return result;
+}
+
+internal void
+PlayerUseItem(Player *player, ItemType *item)
+{
+    if(item->flags & ITEM_FLAG_weapon)
+    {
+        player->weapon_item = item;
+        player->weapon = WeaponComponentInitFromItemType(item);
+    }
+    else if(item->flags & ITEM_FLAG_consumable)
+    {
+        player->health.health += item->health;
+    }
 }
 
 internal void
@@ -43,6 +60,21 @@ PlayerUpdate(Player *player, Map *map, Camera *camera, v3 last_safe_player_posit
         f32 move_speed = 150.f;
         f32 horizontal_movement = 0;
         f32 vertical_movement = 0;
+        
+        for(int i = 0; i < ArrayCount(player->inventory); ++i)
+        {
+            if(player->inventory[i])
+            {
+                if(platform->key_pressed[KEY_1+i])
+                {
+                    PlayerUseItem(player, player->inventory[i]);
+                    if(player->inventory[i]->flags & ITEM_FLAG_consumable)
+                    {
+                        player->inventory[i] = 0;
+                    }
+                }
+            }
+        }
         
         if(platform->key_down[KEY_w])
         {
@@ -163,6 +195,7 @@ PlayerUpdate(Player *player, Map *map, Camera *camera, v3 last_safe_player_posit
         {
             player->sphere.position = last_safe_player_position;
             player->sphere.velocity = v3(0, 0, 0);
+            player->health.health -= 0.2f;
         }
     }
     else
@@ -192,6 +225,15 @@ PlayerUpdate(Player *player, Map *map, Camera *camera, v3 last_safe_player_posit
     TrackSpriteComponentsToHealthComponents(&player->sprite, &player->health, 1);
     CollideHealthAndSphereComponentsWithProjectiles(&player->health, &player->sphere, 1, projectiles,
                                                     particles);
+    
+    if(platform->key_down[KEY_i])
+    {
+        player->inventory_view_transition += (1.f - player->inventory_view_transition) * app->delta_t * 4.f;
+    }
+    else
+    {
+        player->inventory_view_transition += (0.f - player->inventory_view_transition) * app->delta_t * 4.f;
+    }
 }
 
 internal void
@@ -219,6 +261,34 @@ PlayerRender(Player *player, ParticleMaster *particles)
         RendererPushPointLight(&app->renderer, v3(center.x, center.y + 1.f, center.z + 1.f),
                                v3(1.f, 0.8f, 0.6f), 4.f, 1.f);
         ParticleSpawn(particles, PARTICLE_TYPE_strike, center, v3(RandomF32(-1, 1), RandomF32(-1, 1), RandomF32(-1, 1)));
+    }
+    else
+    {
+        if(player->inventory_view_transition > 0.01f)
+        {
+            for(int i = 0; i < ArrayCount(player->inventory); ++i)
+            {
+                ItemType *item = player->inventory[i];
+                
+                if(item)
+                {
+                    f32 angle = PIf * ((f32)i / (ArrayCount(player->inventory) - 1));
+                    
+                    v3 center = {
+                        player->sphere.position.x + 3.f*CosF(angle + PIf),
+                        player->sphere.position.y + 3.f*player->inventory_view_transition,
+                        player->sphere.position.z - 3.f*SinF(angle),
+                    };
+                    v3 scale = { item->source.width / 16.f, item->source.height / 16.f };
+                    v3 p1 = { center.x - scale.x, center.y - scale.y + scale.y - 1.f, center.z };
+                    v3 p2 = { center.x - scale.x, center.y + scale.y + scale.y - 1.f, center.z - 1.f };
+                    v3 p3 = { center.x + scale.x, center.y - scale.y + scale.y - 1.f, center.z };
+                    v3 p4 = { center.x + scale.x, center.y + scale.y + scale.y - 1.f, center.z - 1.f };
+                    RendererPushTexture(&app->renderer, &app->art, 0, item->source,
+                                        p1, p2, p3, p4, v4u(player->inventory_view_transition));
+                }
+            }
+        }
     }
     
     RenderSphereComponentsDebug(&player->sphere, 1);
